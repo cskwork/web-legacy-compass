@@ -1,0 +1,291 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>web-legacy-compass — 코드 고치기 전, 진짜 플로우를 먼저 본다</title>
+<meta name="description" content="레거시 웹 기능을 고치거나 디버깅하기 전, 실제 사용자 플로우를 브라우저부터 DB까지 한 줄의 증거 체인으로 추적해 기록하는 코딩 에이전트 스킬.">
+<style>
+  :root{
+    --bg:#0d1117; --surface:#161b22; --border:#30363d; --text:#e6edf3;
+    --muted:#8b949e; --accent:#58a6ff; --green:#3fb950; --orange:#d29922; --red:#f85149;
+    --mono:'SF Mono',SFMono-Regular,ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,'Segoe UI','Noto Sans KR',Helvetica,Arial,sans-serif;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--bg);color:var(--text);font-family:var(--sans);line-height:1.65;-webkit-font-smoothing:antialiased}
+  a{color:var(--accent);text-decoration:none}
+  a:hover{text-decoration:underline}
+  code{font-family:var(--mono);font-size:.88em;background:var(--surface);padding:.15em .4em;border-radius:5px;border:1px solid var(--border)}
+  pre{font-family:var(--mono);background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:1.1em 1.3em;overflow-x:auto;font-size:.84em;line-height:1.55}
+  pre code{background:none;border:none;padding:0}
+  .wrap{max-width:880px;margin:0 auto;padding:0 24px}
+
+  /* hero */
+  .hero{padding:72px 0 48px;border-bottom:1px solid var(--border)}
+  .badge{display:inline-block;font-family:var(--mono);font-size:.72rem;color:var(--muted);border:1px solid var(--border);border-radius:999px;padding:.3em .9em;margin-bottom:20px;letter-spacing:.04em}
+  h1{font-size:2.6rem;font-weight:800;letter-spacing:-.02em;line-height:1.15;margin-bottom:16px}
+  .hero .lede{font-size:1.18rem;color:var(--muted);max-width:640px}
+  .cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:30px}
+  .btn{display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:10px;font-weight:600;font-size:.95rem;border:1px solid var(--border);transition:.15s}
+  .btn-primary{background:var(--accent);color:#000;border-color:var(--accent)}
+  .btn-primary:hover{text-decoration:none;filter:brightness(1.08)}
+  .btn-ghost{background:var(--surface);color:var(--text)}
+  .btn-ghost:hover{text-decoration:none;border-color:var(--muted)}
+
+  /* sections */
+  section{padding:56px 0;border-bottom:1px solid var(--border)}
+  h2{font-size:1.65rem;font-weight:700;margin-bottom:8px;letter-spacing:-.01em}
+  h2 .en{display:block;font-size:.82rem;color:var(--muted);font-weight:400;margin-top:2px;font-family:var(--mono)}
+  h3{font-size:1.12rem;font-weight:600;margin:28px 0 10px}
+  p{margin-bottom:14px;color:var(--text)}
+  .muted{color:var(--muted)}
+
+  /* directive */
+  .directive{background:var(--surface);border-left:3px solid var(--orange);padding:20px 24px;border-radius:0 10px 10px 0;margin:24px 0}
+  .directive strong{color:var(--orange)}
+
+  /* table */
+  table{width:100%;border-collapse:collapse;margin:18px 0;font-size:.9rem}
+  th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--border)}
+  th{color:var(--muted);font-weight:600;font-size:.82rem;text-transform:uppercase;letter-spacing:.03em}
+  td code{font-size:.82em}
+
+  /* steps */
+  ol.steps{list-style:none;counter-reset:s;margin:20px 0}
+  ol.steps li{counter-increment:s;padding:0 0 18px 48px;position:relative}
+  ol.steps li::before{content:counter(s);position:absolute;left:0;top:0;width:30px;height:30px;background:var(--surface);border:1px solid var(--accent);color:var(--accent);border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.85rem;font-family:var(--mono)}
+
+  /* chain */
+  .chain{font-family:var(--mono);font-size:.8rem;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px 20px;overflow-x:auto;line-height:1.9;color:var(--green);white-space:pre}
+
+  /* tags */
+  .tags{display:flex;flex-wrap:wrap;gap:8px;margin-top:18px}
+  .tag{font-family:var(--mono);font-size:.76rem;padding:.3em .7em;border-radius:6px;border:1px solid var(--border);color:var(--muted)}
+
+  /* card grid */
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px;margin:20px 0}
+  .card{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:18px}
+  .card .ic{font-size:1.4rem;margin-bottom:8px}
+  .card h4{font-size:.98rem;margin-bottom:4px}
+  .card p{font-size:.84rem;color:var(--muted);margin:0}
+
+  /* level pills */
+  .levels{display:flex;flex-wrap:wrap;gap:10px;margin:16px 0}
+  .level{font-family:var(--mono);font-size:.78rem;padding:.4em .9em;border-radius:6px;border:1px solid var(--border)}
+  .lv-runtime{color:var(--green);border-color:var(--green)}
+  .lv-test{color:#79c0ff;border-color:#79c0ff}
+  .lv-code{color:var(--orange);border-color:var(--orange)}
+  .lv-assumed{color:var(--red);border-color:var(--red)}
+  .lv-unavail{color:var(--muted);border-color:var(--muted)}
+
+  /* footer */
+  footer{padding:40px 0 60px;text-align:center;color:var(--muted);font-size:.85rem}
+  footer a{margin:0 8px}
+  @media(max-width:600px){h1{font-size:1.9rem}.hero{padding:48px 0 36px}}
+</style>
+</head>
+<body>
+
+<!-- HERO -->
+<div class="wrap">
+  <div class="hero">
+    <span class="badge">coding-agent skill · MIT</span>
+    <h1>web-legacy-compass</h1>
+    <p class="lede">코드를 고치기 전, 실제 사용자 플로우를 브라우저부터 DB까지 한 줄의 증거 체인으로 추적해 기록한다.</p>
+    <p class="muted" style="margin-top:10px;font-size:.98rem">Trace the real legacy-web user flow — browser, API, business rule, database — before you touch a line of code.</p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/cskwork/web-legacy-compass">GitHub Repo →</a>
+      <a class="btn btn-ghost" href="https://cskwork.github.io/promptbox/skills/web-legacy-compass/">promptbox 목록</a>
+    </div>
+    <div class="tags">
+      <span class="tag">legacy-web</span>
+      <span class="tag">evidence-chain</span>
+      <span class="tag">playwright</span>
+      <span class="tag">chrome-devtools</span>
+      <span class="tag">browser-to-db</span>
+      <span class="tag">debugging</span>
+      <span class="tag">claude-code</span>
+    </div>
+  </div>
+</div>
+
+<!-- WHY -->
+<div class="wrap">
+  <section>
+    <h2>왜 필요한가 <span class="en">why this exists</span></h2>
+    <div class="cards">
+      <div class="card">
+        <div class="ic">✅</div>
+        <h4>유닛 테스트는 통과하는데</h4>
+        <p>실제 화면에선 여전히 안 된다. 브라우저 관점의 증거가 없으면 빈틈을 못 본다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🟢</div>
+        <h4>HTTP 200이 비즈니스 정상을 뜻하지 않는다</h4>
+        <p>성공 상태 코드 뒤에 비즈니스 예외나 잘못된 분기가 숨어있을 수 있다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🗄️</div>
+        <h4>엔드포인트 이름으로 DB 동작을 추론하면 위험</h4>
+        <p>하나의 API가 3개의 쓰기를 트랜잭션 없이 수행할 수 있다. 코드를 추적하거나 런타임을 봐야 한다.</p>
+      </div>
+      <div class="card">
+        <div class="ic">🔄</div>
+        <h4>레거시 플로우는 얽혀있다</h4>
+        <p>리다이렉트, 재시도, 폴링, 백그라운드 호출이 결과에 영향을 준다. 단일 API 로그로는 못 잡는다.</p>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- DIRECTIVE -->
+<div class="wrap">
+  <section>
+    <h2>핵심 원칙 <span class="en">prime directive</span></h2>
+    <div class="directive">
+      <strong>관찰이 수정보다 먼저다.</strong> 현재 동작이 증거로 표현되거나, 접근 불가능한 증거 원천이 명시되기 전에는 구현을 시작하지 않는다.
+    </div>
+    <p>최소한 다음을 확립한다:</p>
+    <ol>
+      <li>순서가 있는 사용자 액션과 브라우저 요청</li>
+      <li>비즈니스 동작을 선택하거나 변경하는 요청 필드</li>
+      <li>관련된 클라이언트 상태 전환</li>
+      <li>프론트엔드 콘솔과 백엔드 비즈니스 예외 증거</li>
+      <li>선택에 사용되는 DB 읽기와 플로우가 유발한 쓰기/사이드 이펙트</li>
+    </ol>
+  </section>
+</div>
+
+<!-- CHAIN -->
+<div class="wrap">
+  <section>
+    <h2>브라우저 → 데이터 체인 <span class="en">browser-to-data chain</span></h2>
+    <p>한 번의 클릭이 끝까지 어떻게 이어지는지 추적한다:</p>
+<div class="chain">user action
+  → DOM event / handler
+  → validation and client state/store
+  → API client
+  → gateway/controller
+  → application/domain service
+  → business rule or exception
+  → transaction
+  → repository/query
+  → database reads/writes
+  → event, cache, audit, or downstream side effect
+  → response
+  → client state/render</div>
+  </section>
+</div>
+
+<!-- WORKFLOW -->
+<div class="wrap">
+  <section>
+    <h2>10단계 워크플로 <span class="en">the workflow</span></h2>
+    <ol class="steps">
+      <li><strong>플로우 정의 &amp; 레코드 시작</strong> — 목표, 사용자 역할, 환경, 진입 URL, 증상, 안전 경계, 사용 가능한 증거 원천 정리</li>
+      <li><strong>첫 액션 전 베이스라인 캡처</strong> — 네트워크/트레이스/콘솔 녹화를 재현보다 먼저 시작</li>
+      <li><strong>정확한 사용자 여정 재현</strong> — 한 액션씩. 모든 결과 요청(redirect·retry·poll·background 포함)을 순서대로 기록</li>
+      <li><strong>브라우저→데이터 체인 구축</strong> — 상태 변경·선택이 중요한 모든 요청에 대해 진입점, 분기 필드, 비즈니스 규칙, 읽는 테이블, 쓰는 테이블, 트랜잭션 경계 식별</li>
+      <li><strong>병렬 분석 (브라우저 상태 보존)</strong> — 브라우저 소유자 1명, 프론트/백엔드/데이터/어드버사리얼 역할 분담</li>
+      <li><strong>최초 분기점 찾기</strong> — 가장 먼저 틀어진 단계에서 멈춘다. 이후 오류는 결과일 뿐</li>
+      <li><strong>반박 가능한 가설</strong> — Observed fact · Inference · Disproof check · Proposed change</li>
+      <li><strong>점진적 구현</strong> — 회귀 테스트 우선, 최소 파일만 변경, 로깅은 진단에 기여하게</li>
+      <li><strong>같은 플로우로 재현</strong> — 동일 role·input·시작 상태로 before/after 비교</li>
+      <li><strong>증거 레코드 마무리</strong> — 검증된 현재 플로우, 목표 플로우, 최초 분기, 변경 파일, 테스트, before/after, 남은 가정</li>
+    </ol>
+  </section>
+</div>
+
+<!-- EVIDENCE LEVELS -->
+<div class="wrap">
+  <section>
+    <h2>증거 수준 <span class="en">evidence levels</span></h2>
+    <p>모든 주장은 수준을 명시한다. 코드 추론을 프로덕션 행 변경 증거로 둔갑하지 않는다.</p>
+    <div class="levels">
+      <span class="level lv-runtime">runtime verified</span>
+      <span class="level lv-test">test verified</span>
+      <span class="level lv-code">code inferred</span>
+      <span class="level lv-assumed">assumed</span>
+      <span class="level lv-unavail">unavailable</span>
+    </div>
+    <table>
+      <tr><th>수준</th><th>의미</th><th>허용되는 근거</th></tr>
+      <tr><td><code>runtime verified</code></td><td>재현 플로우에서 관찰됨</td><td>브라우저 트레이스, 콘솔, 백엔드 로그, 승인된 쿼리, APM</td></tr>
+      <tr><td><code>test verified</code></td><td>자동화 테스트로 재현됨</td><td>테스트 출력과 단정문</td></tr>
+      <tr><td><code>code inferred</code></td><td>실행 코드 경로로 강하게 함축됨</td><td>소스 경로, 심볼, SQL/repository 매핑</td></tr>
+      <tr><td><code>assumed</code></td><td>그럴듯하지만 검증 안 됨</td><td>명시적 가정 + 반박 검사</td></tr>
+      <tr><td><code>unavailable</code></td><td>필요한 원천에 접근 불가</td><td>누락 접근 메모 + 대체 증거 사용</td></tr>
+    </table>
+  </section>
+</div>
+
+<!-- BROWSER TOOLS -->
+<div class="wrap">
+  <section>
+    <h2>브라우저 도구 라우팅 <span class="en">browser tool routing</span></h2>
+    <table>
+      <tr><th>우선순위</th><th>도구</th><th>역할</th></tr>
+      <tr><td>1차</td><td><code>Playwright CLI</code></td><td>컴팩트 재현·트레이스·요청 순서 캡처 (기본 도구)</td></tr>
+      <tr><td>2차</td><td><code>Chrome DevTools MCP</code></td><td>정밀 검사·에스컬레이션 (정확한 body·소스맵·성능)</td></tr>
+      <tr><td>옵션</td><td><code>Ego Lite</code></td><td>공유 로그인 상속이 하드 제약일 때만</td></tr>
+      <tr><td>옵션</td><td><code>agent-browser</code></td><td>이미 표준화된 repo에서만, 네비게이션 캡처 한계 검증 후</td></tr>
+    </table>
+    <p class="muted">상세 결정표와 운용 시퀀스는 repo의 <code>references/BROWSER-TOOL-ROUTING.md</code> 참조.</p>
+  </section>
+</div>
+
+<!-- INSTALL -->
+<div class="wrap">
+  <section>
+    <h2>설치 <span class="en">install</span></h2>
+<pre><code>git clone https://github.com/cskwork/web-legacy-compass.git
+cd web-legacy-compass
+./install.sh /path/to/your/project</code></pre>
+    <p><code>SKILL.md</code>, <code>references/</code>, <code>templates/</code> 가 <code>&lt;project&gt;/.agents/skills/web-legacy-compass/</code> 로 복사되고, <code>docs/web-flows/</code> 디렉토리가 생성된다.</p>
+    <h3>구조</h3>
+<pre><code>.
+├── SKILL.md                          # 스킬 정의 (frontmatter + 워크플로)
+├── references/
+│   ├── BROWSER-TOOL-ROUTING.md       # 도구 결정표
+│   ├── EVIDENCE-MODEL.md             # 증거 수준·페이로드 규칙·DB 매핑·로깅
+│   └── SUBAGENT-PATTERN.md           # 병렬 에이전트 패턴
+├── templates/
+│   └── FLOW-RECORD.md                # 13섹션 조사 레코드 템플릿
+└── install.sh</code></pre>
+  </section>
+</div>
+
+<!-- COMPLETION GATE -->
+<div class="wrap">
+  <section>
+    <h2>완료 게이트 <span class="en">completion gate</span></h2>
+    <p>다음이 모두 참이 되기 전에는 완료를 선언하지 않는다:</p>
+    <ul style="list-style:none;margin:16px 0">
+      <li style="margin-bottom:8px">☐ 각 사용자 액션이 순서 있는 요청(또는 요청 없음)에 매핑됨</li>
+      <li style="margin-bottom:8px">☐ redirect·retry·poll·duplicate·background 호출이 모두 처리됨</li>
+      <li style="margin-bottom:8px">☐ 중요한 요청/응답 필드가 기록되고 비밀은 마스킹됨</li>
+      <li style="margin-bottom:8px">☐ 클라이언트 상태 전환과 콘솔 증거가 시퀀스 ID에 매핑됨</li>
+      <li style="margin-bottom:8px">☐ 백엔드 비즈니스 예외와 기술 장애가 분리되어 플로우에 연결됨</li>
+      <li style="margin-bottom:8px">☐ 선택 중요 DB 읽기와 상태 변경 연산이 코드/런타임 증거에 매핑되거나 unavailable 표시</li>
+      <li style="margin-bottom:8px">☐ 트랜잭션 경계와 캐시/이벤트/audit/다운스트림 사이드 이펙트가 문서화됨</li>
+      <li style="margin-bottom:8px">☐ runtime 사실이 code 추론 및 가정과 구분됨</li>
+      <li style="margin-bottom:8px">☐ 최초 분기점이 증거로 뒷받침되고 반박 검사를 가짐</li>
+      <li style="margin-bottom:8px">☐ 구현이 최소이고 회귀 테스트되었으며 실제 브라우저 플로우로 재현됨</li>
+      <li>☐ 최종 Markdown 레코드가 구현된 동작과 일치함</li>
+    </ul>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <p>
+      <a href="https://github.com/cskwork/web-legacy-compass">GitHub</a> ·
+      <a href="https://cskwork.github.io/promptbox/skills/web-legacy-compass/">promptbox</a> ·
+      MIT License · © 2026 cskwork
+    </p>
+  </div>
+</footer>
+
+</body>
+</html>
