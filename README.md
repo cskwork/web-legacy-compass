@@ -1,3 +1,5 @@
+<p align="center"><img src="logo.png" width="120" alt="logo" /></p>
+
 # web-legacy-compass
 
 > **Observe the real user flow before modifying code.**
