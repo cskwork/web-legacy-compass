@@ -1,6 +1,6 @@
 ---
 name: web-legacy-compass
-description: Trace real legacy-web user flows before changing frontend or API code. Use for feature work or debugging where request order, important payload fields, browser state, frontend console output, backend business exceptions, and database reads or writes must be correlated and recorded.
+description: Trace real legacy-web user flows before changing code. Use when request order and DB reads/writes must be correlated.
 ---
 
 # Web Legacy Compass

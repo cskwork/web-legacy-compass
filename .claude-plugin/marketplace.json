@@ -1,14 +1,14 @@
 {
   "$schema": "https://www.schemastore.org/claude-code-marketplace.json",
   "name": "web-legacy-compass",
-  "description": "Trace real legacy-web user flows before changing frontend or API code. Use for feature work or debugging where request o",
+  "description": "Trace real legacy-web user flows before changing code. Use when request order and DB reads/writes must be correlated.",
   "owner": {
     "name": "cskwork"
   },
   "plugins": [
     {
       "name": "web-legacy-compass",
-      "description": "Trace real legacy-web user flows before changing frontend or API code. Use for feature work or debugging where request o",
+      "description": "Trace real legacy-web user flows before changing code. Use when request order and DB reads/writes must be correlated.",
       "source": "./",
       "category": "productivity"
     }
