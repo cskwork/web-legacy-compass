@@ -1,4 +1,4 @@
 # web-legacy-compass
 
-@./SKILL.md
+@./skills/web-legacy-compass/SKILL.md
 

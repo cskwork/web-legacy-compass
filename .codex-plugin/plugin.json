@@ -15,7 +15,7 @@
     "claude-code",
     "codex"
   ],
-  "skills": "./",
+  "skills": "./skills/",
   "interface": {
     "displayName": "Web Legacy Compass",
     "shortDescription": "Trace real legacy-web user flows before changing frontend or API code. Use for f",
