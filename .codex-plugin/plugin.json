@@ -1,0 +1,34 @@
+{
+  "name": "web-legacy-compass",
+  "version": "0.1.0",
+  "description": "Trace real legacy-web user flows before changing frontend or API code. Use for feature work or debugging where request order, important payload fields, browser state, frontend console output, backend business exceptions, and database reads or writes must be correlated and recorded.",
+  "author": {
+    "name": "cskwork",
+    "url": "https://github.com/cskwork"
+  },
+  "homepage": "https://github.com/cskwork/web-legacy-compass",
+  "repository": "https://github.com/cskwork/web-legacy-compass",
+  "license": "MIT",
+  "keywords": [
+    "web-legacy-compass",
+    "skill",
+    "claude-code",
+    "codex"
+  ],
+  "skills": "./",
+  "interface": {
+    "displayName": "Web Legacy Compass",
+    "shortDescription": "Trace real legacy-web user flows before changing frontend or API code. Use for f",
+    "longDescription": "Trace real legacy-web user flows before changing frontend or API code. Use for feature work or debugging where request order, important payload fields, browser state, frontend console output, backend business exceptions, and database reads or writes must be correlated and recorded.",
+    "developerName": "cskwork",
+    "category": "Productivity",
+    "capabilities": [
+      "Instructions"
+    ],
+    "websiteURL": "https://github.com/cskwork/web-legacy-compass",
+    "defaultPrompt": [
+      "Use web-legacy-compass for this task."
+    ],
+    "brandColor": "#2563EB"
+  }
+}

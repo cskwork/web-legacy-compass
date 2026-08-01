@@ -1,10 +1,6 @@
-# dependencies
-node_modules/
-
-# build output
-dist/
-
-# scratch / temp
-.tmp-sources/
-*.log
 .DS_Store
+__pycache__/
+*.py[cod]
+evals/results/
+node_modules/
+dist/
