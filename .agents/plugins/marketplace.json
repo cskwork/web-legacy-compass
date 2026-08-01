@@ -1,0 +1,21 @@
+{
+  "name": "web-legacy-compass",
+  "interface": {
+    "displayName": "Web Legacy Compass"
+  },
+  "plugins": [
+    {
+      "name": "web-legacy-compass",
+      "source": {
+        "source": "url",
+        "url": "https://github.com/cskwork/web-legacy-compass.git",
+        "ref": "main"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_INSTALL"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
