@@ -8,7 +8,6 @@ A coding-agent skill for tracing real legacy-web user flows — browser, API, bu
 
 Use it for feature work or debugging where request order, important payload fields, browser state, frontend console output, backend business exceptions, and database reads or writes must be correlated and recorded.
 
-🌐 **Onboarding / docs site:** <https://cskwork.github.io/web-legacy-compass/>
 📦 **Promptbox listing:** <https://cskwork.github.io/promptbox/skills/web-legacy-compass/>
 
 ## Why
